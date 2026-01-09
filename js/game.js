@@ -7,6 +7,10 @@ class Game {
         this.clouds = BackgroundObject.CreateDefaultObjects(Cloud);
         this.powerups = BackgroundObject.CreateDefaultObjects(Powerup, 1);
         this.fish = [];
+        this.miniGame = new LaunchMiniGame();
+        this.timeFinished = 0;
+        this.finishDuration = 200;
+        this.depth = 0;
     }
     UpdateClouds(deltaTime) {
         for (let i = 0; i < this.clouds.length; i++) {
@@ -56,13 +60,34 @@ class Game {
             this.powerups[i] = powerup;
         }
     }
+    UpdateFinishSequence(deltaTime) {
+        this.timeFinished += deltaTime;
+    }
+    DrawFinishSequence(ctx, scale) {
+        let maxFontSize = 55;
+        let fontSize = this.timeFinished;
+        if (fontSize > maxFontSize) {
+            fontSize = maxFontSize;
+        }
+        ctx.fillStyle = WHITE;
+        ctx.font = `${fontSize * scale}px Roboto`;
+        ctx.fillText(this.depth + "m", (WIDTH / 2 - fontSize) * scale, (HEIGHT / 2 - 100) * scale);
+    }
     Update(deltaTime, input) {
         this.player.Update(deltaTime, input.mouse, this.camera, this.particleSystem);
+        this.depth = Math.round(this.player.position.y * 0.1);
         this.camera.Update(this.player, deltaTime);
         this.particleSystem.Update(deltaTime);
         this.UpdateClouds(deltaTime);
         this.UpdateFish(deltaTime);
         this.UpdatePowerups(deltaTime);
+        if (!this.player.launched) {
+            if (this.miniGame.Update(input.mouse, deltaTime)) {
+                this.player.launched = true;
+            }
+        }
+        if (this.player.finished) this.UpdateFinishSequence(deltaTime);
+        return this.timeFinished >= this.finishDuration;
     }
     Draw(ctx, img, scale) {
         ctx.translate(-this.camera.position.x * scale, -this.camera.position.y * scale);
@@ -82,11 +107,16 @@ class Game {
 
         this.particleSystem.Draw(ctx, scale);
 
+
     }
     DrawUI(ctx, scale) {
         ctx.fillStyle = WHITE;
         ctx.font = `${32 * scale}px Roboto`;
-        ctx.fillText("DEPTH: ", 15 * scale, 40 * scale);
+        ctx.fillText(`DEPTH: ${this.depth}m`, 15 * scale, 40 * scale);
+
+        if (!this.player.launched) this.miniGame.Draw(ctx, scale);
+        if (this.player.finished) this.DrawFinishSequence(ctx, scale);
+
     }
 }
 
@@ -95,7 +125,7 @@ class Camera {
         this.lockDistance = 10;
         this.locked = false;
         this.focusSpeed = 0.3;
-        this.position = { x: -100, y: -500 };
+        this.position = { x: -100, y: -700 };
     }
     Update(player, deltaTime) {
         this.desiredPosition = {
@@ -158,7 +188,18 @@ class Player {
             }
         }
     }
+    UpdateBoostParticles(particles) {
+        if (this.position.y > Game.WaterLevel || Date.now() % 3 != 0) {
+            return;
+        }
+        let magnitudeVelocity = this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y;
+        let particleVelocityX = Math.cos(-this.rotation) + this.velocity.x;
+        let particleVelocityY = Math.sin(-this.rotation) + this.velocity.y;
+        particles.CreateParticle(this.position.x + this.scale.x / 2, this.position.y + this.scale.y, particleVelocityX, particleVelocityY, 1, 10);
+    }
     UpdateParticles(particles, deltaTime) {
+
+        this.UpdateBoostParticles(particles);
 
         if (this.position.y < Game.WaterLevel) {
             this.entranceVelocityY = this.velocity.y;
@@ -180,7 +221,7 @@ class Player {
         this.tick += deltaTime * 2;
         if (this.tick >= this.entranceVelocityY - this.velocity.y) {
             let xvel = (Math.floor(Math.random() * 6) - 3);
-            particles.CreateParticle(this.position.x, this.position.y, xvel, -5, 5, 100);
+            particles.CreateParticle(this.position.x + this.scale.x / 2, this.position.y, xvel, -5, 5, 100);
             this.tick = 0;
         }
 
@@ -202,7 +243,7 @@ class Player {
         this.lastPosition = { x: this.position.x, y: this.position.y };
 
         if (mouse.down) {
-            this.launched = true;
+            //   this.launched = true;
         }
     }
     DrawLauncher(ctx, scale) {
@@ -250,5 +291,48 @@ class Powerup extends BackgroundObject {
             return true;
         }
         return false;
+    }
+}
+
+class LaunchMiniGame {
+    constructor() {
+        this.bounds = { x: 50, y: 400, width: 50, height: 300 };
+        this.radius = 25;
+        // this.goalY = this.bounds.y + this.bounds.height / 2;
+        this.goalY = Math.floor(Math.random() * (this.bounds.height - this.radius)) + this.bounds.y + this.radius;
+        this.playerY = this.bounds.y + this.bounds.height / 2;
+        this.playerMoveSpeed = 3;
+        this.playerDirection = 1;
+    }
+    Update(mouse, deltaTime) {
+        this.playerY += this.playerMoveSpeed * this.playerDirection * deltaTime;
+        if (this.playerY + this.radius > this.bounds.y + this.bounds.height) this.playerDirection = -1;
+
+        if (mouse.down && mouse.canTrigger) {
+            if ((this.playerY - this.goalY) * (this.playerY - this.goalY) <= this.radius * this.radius) {
+                this.playerDirection = 1;
+                console.log("t");
+                this.goalY = Math.floor(Math.random() * (this.bounds.height - this.radius)) + this.bounds.y + this.radius;
+            } else {
+                return true;
+            }
+            mouse.canTrigger = false;
+        }
+
+        return (this.playerY - this.radius < this.bounds.y);
+    }
+    Draw(ctx, scale) {
+        ctx.strokeStyle = "white";
+        ctx.strokeRect(this.bounds.x * scale, this.bounds.y * scale, this.bounds.width * scale, this.bounds.height * scale);
+
+        ctx.beginPath();
+        ctx.arc((this.bounds.x + this.radius) * scale, this.goalY * scale, this.radius * scale, 0, 2 * Math.PI, false);
+        ctx.stroke();
+        ctx.closePath();
+
+        ctx.beginPath();
+        ctx.arc((this.bounds.x + this.radius) * scale, this.playerY * scale, this.radius * scale, 0, 2 * Math.PI, false);
+        ctx.fill();
+        ctx.closePath();
     }
 }

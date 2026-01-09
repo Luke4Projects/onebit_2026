@@ -21,7 +21,9 @@ class Main {
     }
     Update(timestamp) {
         this.UpdateGameLoop(timestamp);
-        this.game.Update(this.deltaTime, this.input);
+        if (this.game.Update(this.deltaTime, this.input)) {
+            this.game = new Game();
+        }
         this.Draw();
     }
     Draw() {
@@ -57,14 +59,20 @@ class Input {
         this.mouse = {
             x: 0,
             y: 0,
-            down: false
+            down: false,
+            canTrigger: true
         };
 
         this.OnResize = this.OnResize.bind(this);
         window.addEventListener("resize", this.OnResize);
         window.addEventListener("mousemove", (e) => { this.mouse.x = e.clientX / this.scale; this.mouse.y = e.clientY / this.scale });
-        window.addEventListener("mousedown", (e) => { this.mouse.down = true });
-        window.addEventListener("mouseup", (e) => { this.mouse.down = false });
+        window.addEventListener("mousedown", (e) => {
+            this.mouse.down = true;
+        });
+        window.addEventListener("mouseup", (e) => {
+            this.mouse.down = false;
+            this.mouse.canTrigger = true;
+        });
         this.OnResize();
 
     }
