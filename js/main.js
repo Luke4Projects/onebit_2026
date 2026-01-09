@@ -43,7 +43,7 @@ class Main {
     }
     UpdateGameLoop(timestamp) {
         requestAnimationFrame(this.Update);
-        let perfectFrameTime = 1000/60;
+        let perfectFrameTime = 1000 / 60;
         this.deltaTime = (timestamp - this.lastTimestamp) / perfectFrameTime;
         this.lastTimestamp = timestamp;
     }
@@ -62,26 +62,30 @@ class Input {
 
         this.OnResize = this.OnResize.bind(this);
         window.addEventListener("resize", this.OnResize);
-        window.addEventListener("mousemove", (e) => {this.mouse.x = e.clientX/this.scale; this.mouse.y = e.clientY/this.scale});
-        window.addEventListener("mousedown", (e) => {this.mouse.down = true});
-        window.addEventListener("mouseup", (e) => {this.mouse.down = false});
+        window.addEventListener("mousemove", (e) => { this.mouse.x = e.clientX / this.scale; this.mouse.y = e.clientY / this.scale });
+        window.addEventListener("mousedown", (e) => { this.mouse.down = true });
+        window.addEventListener("mouseup", (e) => { this.mouse.down = false });
         this.OnResize();
 
     }
     OnResize(e) {
-        if(window.innerWidth >= window.innerHeight/0.8) {
-            this.canvas.height = window.innerHeight*0.99;
-            this.canvas.width = this.canvas.height/0.8;
+        if (window.innerWidth >= window.innerHeight / 0.8) {
+            this.canvas.height = window.innerHeight * 0.99;
+            this.canvas.width = this.canvas.height / 0.8;
         } else {
-            this.canvas.width = window.innerWidth*0.99;
-            this.canvas.height = this.canvas.width*0.8;
+            this.canvas.width = window.innerWidth * 0.99;
+            this.canvas.height = this.canvas.width * 0.8;
         }
         this.scale = Math.min(this.canvas.width, this.canvas.height) / 800;
         this.ctx.imageSmoothingEnabled = false;
     }
 }
 
-document.body.onload = function() {
+function DistanceSquared(pos1, pos2) {
+    return (pos1.x - pos2.x) * (pos1.x - pos2.x) + (pos1.y - pos2.y) * (pos1.y - pos2.y);
+}
+
+document.body.onload = function () {
     const main = new Main();
     main.Init();
 };
