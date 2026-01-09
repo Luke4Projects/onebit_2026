@@ -1,17 +1,19 @@
 class Particle {
-    constructor(x, y, xVelocity, yVelocity, radius, duration) {
+    constructor(x, y, xVelocity, yVelocity, radius, duration, gravity) {
         this.ExpandSpeed = 5;
 
         this.position = { x: x, y: y };
         this.velocity = { x: xVelocity, y: yVelocity };
         this.radius = radius;
         this.duration = duration;
+        this.gravity = gravity;
         this.tick = 0;
         this.radiusOffset = this.radius;
     }
     UpdateMovement(deltaTime) {
-        this.position.x += (this.velocity.x + Math.sin(this.tick * 0.3) * this.velocity.x / 2) * deltaTime;
-        this.position.y += (this.velocity.y + Math.sin(this.tick * 0.3) * this.velocity.y / 2) * deltaTime;
+        this.position.x += (this.velocity.x + Math.sin(this.tick * 0.1) * this.velocity.x / 2) * deltaTime;
+        this.position.y += (this.velocity.y) * deltaTime;
+        this.velocity.y += this.gravity * deltaTime;
     }
     Update(deltaTime) {
 
@@ -59,7 +61,7 @@ class ParticleSystem {
             particle.Draw(ctx, scale);
         }
     }
-    CreateParticle(x, y, xVelocity, yVelocity, radius, duration) {
-        this.particles.push(new Particle(x, y, xVelocity, yVelocity, radius, duration));
+    CreateParticle(x, y, xVelocity, yVelocity, radius, duration, gravity = 0) {
+        this.particles.push(new Particle(x, y, xVelocity, yVelocity, radius, duration, gravity));
     }
 }

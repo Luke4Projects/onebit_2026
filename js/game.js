@@ -92,7 +92,6 @@ class Game {
     Draw(ctx, img, scale) {
         ctx.translate(-this.camera.position.x * scale, -this.camera.position.y * scale);
 
-        this.player.Draw(ctx, img.player, scale);
         for (let cloud of this.clouds) {
             cloud.Draw(ctx, scale);
         }
@@ -106,6 +105,8 @@ class Game {
         ctx.fillRect((this.player.position.x - WIDTH / 2) * scale, Game.WaterLevel * scale, WIDTH * 2 * scale, 10 * scale);
 
         this.particleSystem.Draw(ctx, scale);
+
+        this.player.Draw(ctx, img.player, scale);
 
 
     }
@@ -188,18 +189,7 @@ class Player {
             }
         }
     }
-    UpdateBoostParticles(particles) {
-        if (this.position.y > Game.WaterLevel || Date.now() % 3 != 0) {
-            return;
-        }
-        let magnitudeVelocity = this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y;
-        let particleVelocityX = Math.cos(-this.rotation) + this.velocity.x;
-        let particleVelocityY = Math.sin(-this.rotation) + this.velocity.y;
-        particles.CreateParticle(this.position.x + this.scale.x / 2, this.position.y + this.scale.y, particleVelocityX, particleVelocityY, 1, 10);
-    }
     UpdateParticles(particles, deltaTime) {
-
-        this.UpdateBoostParticles(particles);
 
         if (this.position.y < Game.WaterLevel) {
             this.entranceVelocityY = this.velocity.y;
@@ -211,9 +201,9 @@ class Player {
         if (this.splashes < maxSplashes) {
             for (let x = -10; x < 10; x++) {
                 let radius = 5;
-                let yVelocity = Math.floor(Math.random() * -3) - 5;
+                let yVelocity = Math.floor(Math.random() * -5) - 8;
                 let y = Game.WaterLevel + Math.floor(Math.random() * 10) + 50;
-                particles.CreateParticle(this.position.x + x * radius / 2, y, x / 2, yVelocity, radius, 100);
+                particles.CreateParticle(this.position.x + x * radius / 2, y, x / 2, yVelocity, radius, 100, 0.2);
             }
             this.splashes++;
         }
