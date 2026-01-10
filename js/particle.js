@@ -65,3 +65,48 @@ class ParticleSystem {
         this.particles.push(new Particle(x, y, xVelocity, yVelocity, radius, duration, gravity));
     }
 }
+
+class ScreenEffects {
+
+    constructor() {
+        this.fadeAlpha = 0.0;
+        this.fadeSpeed = 0.1;
+        this.fading = false;
+    }
+
+    FadeToBlack() {
+        this.fading = true;
+    }
+
+    UpdateFade(deltaTime) {
+        if(this.fading) {
+            if(this.fadeAlpha < 1.0) {
+                this.fadeAlpha += this.fadeSpeed * deltaTime;
+            } else {
+                this.fading = false;
+            }
+        } else {
+            if(this.fadeAlpha > 0.0) {
+                this.fadeAlpha -= this.fadeSpeed * deltaTime;
+                if(this.fadeAlpha <= 0.0) {
+                    this.fadeAlpha = 0.0;
+                }
+            }
+        }
+    }
+
+    Update(deltaTime) {
+        this.UpdateFade(deltaTime);
+    }
+
+    Draw(ctx, scale) {
+        if(this.fadeAlpha > 0.0) {
+            ctx.save();
+            ctx.fillStyle = BLACK;
+            ctx.globalAlpha = this.fadeAlpha;
+            ctx.fillRect(0, 0, WIDTH*scale, HEIGHT*scale);
+            ctx.restore();
+        }
+    }
+
+}

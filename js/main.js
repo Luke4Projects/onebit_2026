@@ -14,6 +14,7 @@ class Main {
         this.deltaTime = 1.0;
         this.lastTimestamp = 1.0;
         this.game = new Game();
+        this.screenEffects = new ScreenEffects();
     }
     Init() {
         this.LoadImages();
@@ -22,8 +23,15 @@ class Main {
     Update(timestamp) {
         this.UpdateGameLoop(timestamp);
         if (this.game.Update(this.deltaTime, this.input)) {
-            this.game = new Game();
+            if(this.game.shouldFade) {
+                this.screenEffects.FadeToBlack();
+                this.game.shouldFade = false;
+            }
+            if(!this.screenEffects.fading) {
+                this.game = new Game();
+            }
         }
+        this.screenEffects.Update(this.deltaTime);
         this.Draw();
     }
     Draw() {
@@ -32,6 +40,7 @@ class Main {
         this.game.Draw(this.ctx, this.img, this.input.scale);
         this.ctx.resetTransform();
         this.game.DrawUI(this.ctx, this.input.scale);
+        this.screenEffects.Draw(this.ctx, this.input.scale);
     }
     LoadImages() {
         this.img = {
